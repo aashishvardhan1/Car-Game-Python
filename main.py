@@ -3,6 +3,7 @@ import pygame
 import time
 import math
 from utils import scale_image, blit_rotate_center
+pygame.font.init()
 
 GRASS = scale_image(pygame.image.load("imgs/grass.jpg"), 2.5)
 TRACK = scale_image(pygame.image.load("imgs/track.png"), 0.9)
@@ -22,6 +23,36 @@ pygame.display.set_caption("Racing Game")
 
 FPS = 60
 PATH = [(140, 151), (136, 91), (105, 59), (49, 85), (48, 371), (249, 581), (324, 538), (329, 437), (401, 382), (479, 438), (479, 541), (538, 587), (593, 534), (592, 340), (538, 289), (352, 288), (320, 253), (359, 206), (533, 207), (595, 164), (578, 67), (475, 59), (266, 60), (227, 94), (226, 153), (227, 206), (223, 260), (215, 317), (139, 294), (138, 242)]
+
+class GameInfo:
+    LEVELS = 3
+
+    def __init__(self, level=1):
+        self.level = level
+        self.started = False
+        self.level_start_time = 0
+
+    def next_level(self):
+        self.level += 1
+        self.started = False
+
+    def reset(self):
+        self.level = 1
+        self.started = False
+        self.level_start_time = 0
+
+    def game_finished(self):
+        return self.level > self.LEVELS
+
+    def start_level(self):
+        self.started = True
+        self.level_start_time = time.time()
+
+    def get_level_time(self):
+        if not self.started:
+            return 0
+        return self.level_start_time - time.time()
+
 
 class AbstractCar:
     def __init__(self, max_vel, rotation_vel):
@@ -188,11 +219,15 @@ clock = pygame.time.Clock()
 images = [(GRASS, (0,0)), (TRACK, (0,0)), (FINISH, FINISH_POSITION), (TRACK_BORDER, (0, 0))]
 player_car = PlayerCar(4, 4)
 computer_car = ComputerCar(3, 4, PATH)
+game_info = GameInfo()
 
 while run:
     clock.tick(FPS)
 
     draw(WIN, images, player_car, computer_car)
+
+    while not game_info.started:
+        pass
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -208,5 +243,5 @@ while run:
 
     handle_collision(player_car, computer_car)
 
-print(computer_car.path)
+# print(computer_car.path)
 pygame.quit()
