@@ -2,7 +2,7 @@ from os import path
 import pygame
 import time
 import math
-from utils import scale_image, blit_rotate_center
+from utils import blit_text_center, scale_image, blit_rotate_center, blit_text_center
 pygame.font.init()
 
 GRASS = scale_image(pygame.image.load("imgs/grass.jpg"), 2.5)
@@ -20,6 +20,8 @@ GREEN_CAR = scale_image(pygame.image.load("imgs/green-car.png"), 0.45)
 WIDTH, HEIGHT = TRACK.get_width(), TRACK.get_height()
 WIN = pygame.display.set_mode((WIDTH,HEIGHT))
 pygame.display.set_caption("Racing Game")
+
+MAIN_FONT = pygame.font.SysFont("comicsans", 44)
 
 FPS = 60
 PATH = [(140, 151), (136, 91), (105, 59), (49, 85), (48, 371), (249, 581), (324, 538), (329, 437), (401, 382), (479, 438), (479, 541), (538, 587), (593, 534), (592, 340), (538, 289), (352, 288), (320, 253), (359, 206), (533, 207), (595, 164), (578, 67), (475, 59), (266, 60), (227, 94), (226, 153), (227, 206), (223, 260), (215, 317), (139, 294), (138, 242)]
@@ -51,7 +53,7 @@ class GameInfo:
     def get_level_time(self):
         if not self.started:
             return 0
-        return self.level_start_time - time.time()
+        return round(time.time() - self.level_start_time)
 
 
 class AbstractCar:
@@ -168,9 +170,18 @@ class ComputerCar(AbstractCar):
         super().move()
 
 
-def draw(win, images, player_car, computer_car):
+def draw(win, images, player_car, computer_car, game_info):
     for img, pos in images:
-        win.blit(img, pos) 
+        win.blit(img, pos)
+
+    level_text = MAIN_FONT.render(f"Level {game_info.level}", 0, (255,255,255))
+    win.blit(level_text, (10, HEIGHT - level_text.get_height() - 70))
+    
+    time_text = MAIN_FONT.render(f"Time: {game_info.get_level_time}s", 1, (255,255,255))
+    win.blit(time_text, (10, HEIGHT - time_text.get_height() - 40))
+
+    vel_text = MAIN_FONT.render(f"Vel {round(player_car.vel, 2)}px/s", 1, (255,255,255))
+    win.blit(vel_text, (10, HEIGHT - vel_text.get_height() - 10))
 
     player_car.draw(win)
     computer_car.draw(win)
@@ -218,16 +229,24 @@ run = True
 clock = pygame.time.Clock()
 images = [(GRASS, (0,0)), (TRACK, (0,0)), (FINISH, FINISH_POSITION), (TRACK_BORDER, (0, 0))]
 player_car = PlayerCar(4, 4)
-computer_car = ComputerCar(3, 4, PATH)
+computer_car = ComputerCar(2, 3, PATH)
 game_info = GameInfo()
 
 while run:
     clock.tick(FPS)
 
-    draw(WIN, images, player_car, computer_car)
+    draw(WIN, images, player_car, computer_car, game_info)
 
     while not game_info.started:
-        pass
+        blit_text_center(WIN, MAIN_FONT, f"Press Any Key to start level {game_info.level}!")
+        pygame.display.update()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                break
+
+            if event.type == pygame.KEYDOWN:
+                game_info.start_level()
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
